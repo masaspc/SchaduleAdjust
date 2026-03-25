@@ -38,12 +38,15 @@ public class StubGraphApiService : IGraphApiService
         var current = start;
         var duration = TimeSpan.FromMinutes(durationMinutes);
 
-        // Generate sample slots during business hours (9:00-17:00)
+        // Generate sample slots during business hours (9:00-17:00 local time)
         while (current < end && suggestions.Count < 10)
         {
-            if (current.Hour >= 9 && current.Hour + (durationMinutes / 60.0) <= 17
-                && current.DayOfWeek != DayOfWeek.Saturday
-                && current.DayOfWeek != DayOfWeek.Sunday)
+            var localHour = current.ToOffset(start.Offset).Hour;
+            var localDow = current.ToOffset(start.Offset).DayOfWeek;
+
+            if (localHour >= 9 && localHour + (durationMinutes / 60.0) <= 17
+                && localDow != DayOfWeek.Saturday
+                && localDow != DayOfWeek.Sunday)
             {
                 suggestions.Add(new MeetingTimeSuggestion
                 {
@@ -65,10 +68,11 @@ public class StubGraphApiService : IGraphApiService
             }
 
             current = current.AddHours(1);
-            // Skip to next day's 9 AM if past business hours
-            if (current.Hour >= 17)
+            // Skip to next day's 9 AM (local time) if past business hours
+            var localCurrent = current.ToOffset(start.Offset);
+            if (localCurrent.Hour >= 17)
             {
-                var nextDay = current.Date.AddDays(1).AddHours(9);
+                var nextDay = localCurrent.Date.AddDays(1).AddHours(9);
                 current = new DateTimeOffset(nextDay, start.Offset);
             }
         }
