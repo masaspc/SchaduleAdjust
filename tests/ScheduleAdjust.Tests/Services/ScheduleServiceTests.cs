@@ -74,8 +74,10 @@ public class ScheduleServiceTests
         db.SchedulePolls.Add(poll);
         await db.SaveChangesAsync();
 
-        var start = DateTimeOffset.Now.AddDays(2);
-        var end = start.AddHours(1);
+        // Use explicit JST business hours to pass the filter
+        var jstOffset = TimeSpan.FromHours(9);
+        var start = new DateTimeOffset(2026, 4, 1, 10, 0, 0, jstOffset); // Wed 10:00 JST
+        var end = new DateTimeOffset(2026, 4, 1, 11, 0, 0, jstOffset);   // Wed 11:00 JST
 
         _graphApiMock.Setup(g => g.FindMeetingTimesAsync(
             It.IsAny<IEnumerable<string>>(),
