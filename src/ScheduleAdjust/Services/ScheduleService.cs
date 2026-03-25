@@ -101,6 +101,16 @@ public class ScheduleService : IScheduleService
                 var startDt = DateTimeOffset.Parse(startStr);
                 var endDt = DateTimeOffset.Parse(endStr);
 
+                // Filter to business hours (9:00-17:00 JST) and weekdays only
+                var jst = TimeZoneInfo.FindSystemTimeZoneById("Asia/Tokyo");
+                var localStart = TimeZoneInfo.ConvertTime(startDt, jst);
+                var localEnd = TimeZoneInfo.ConvertTime(endDt, jst);
+
+                if (localStart.Hour < 9 || localEnd.Hour > 17 || (localEnd.Hour == 17 && localEnd.Minute > 0))
+                    continue;
+                if (localStart.DayOfWeek == DayOfWeek.Saturday || localStart.DayOfWeek == DayOfWeek.Sunday)
+                    continue;
+
                 // Avoid duplicates
                 if (poll.TimeSlots.Any(s => s.StartDateTime == startDt && s.EndDateTime == endDt))
                     continue;
