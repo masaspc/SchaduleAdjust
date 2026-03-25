@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using ScheduleAdjust.Models;
 using ScheduleAdjust.Services;
+using Xunit;
 
 namespace ScheduleAdjust.Tests.Services;
 

@@ -5,6 +5,7 @@ using ScheduleAdjust.Controllers;
 using ScheduleAdjust.Models;
 using ScheduleAdjust.Services;
 using ScheduleAdjust.ViewModels;
+using Xunit;
 
 namespace ScheduleAdjust.Tests.Controllers;
 
