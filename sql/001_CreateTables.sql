@@ -66,7 +66,7 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_SchedulePolls_Con
 BEGIN
     ALTER TABLE [SchedulePolls]
         ADD CONSTRAINT [FK_SchedulePolls_ConfirmedSlot] FOREIGN KEY ([ConfirmedSlotId])
-            REFERENCES [PollTimeSlots] ([SlotId]) ON DELETE SET NULL;
+            REFERENCES [PollTimeSlots] ([SlotId]) ON DELETE NO ACTION;
 END;
 
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PollResponses')

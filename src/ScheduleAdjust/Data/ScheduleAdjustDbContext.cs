@@ -36,7 +36,7 @@ public class ScheduleAdjustDbContext : DbContext
             entity.HasOne(e => e.ConfirmedSlot)
                 .WithMany()
                 .HasForeignKey(e => e.ConfirmedSlotId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         // PollAttendee
