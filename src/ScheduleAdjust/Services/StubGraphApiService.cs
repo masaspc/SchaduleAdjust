@@ -68,8 +68,8 @@ public class StubGraphApiService : IGraphApiService
             // Skip to next day's 9 AM if past business hours
             if (current.Hour >= 17)
             {
-                current = current.Date.AddDays(1).AddHours(9);
-                current = new DateTimeOffset(current, start.Offset);
+                var nextDay = current.Date.AddDays(1).AddHours(9);
+                current = new DateTimeOffset(nextDay, start.Offset);
             }
         }
 
