@@ -1,0 +1,119 @@
+@model BookingViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "~/Views/Booking/_BookingLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h2 class="card-title mb-1">@Model.Title</h2>
+                <p class="text-muted">主催者: @Model.OrganizerName</p>
+
+                @if (!string.IsNullOrEmpty(Model.Note))
+                {
+                    <div class="alert alert-light">
+                        <i class="bi bi-info-circle"></i> @Model.Note
+                    </div>
+                }
+
+                @if (Model.Deadline.HasValue)
+                {
+                    <p class="text-muted small">
+                        <i class="bi bi-clock"></i> 回答期限: @Model.Deadline.Value.ToString("yyyy/MM/dd HH:mm")
+                    </p>
+                }
+
+                <hr />
+
+                <form asp-action="Submit" asp-route-guid="@Model.PollGuid" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <h5 class="mb-3"><i class="bi bi-calendar3"></i> ご都合の良い日時を選択してください</h5>
+
+                    <div class="mb-4">
+                        @if (Model.AvailableSlots.Any())
+                        {
+                            @foreach (var dateGroup in Model.AvailableSlots.GroupBy(s => s.StartDateTime.Date))
+                            {
+                                <h6 class="mt-3 mb-2 text-primary">
+                                    <i class="bi bi-calendar-day"></i>
+                                    @dateGroup.Key.ToString("yyyy/MM/dd (ddd)")
+                                </h6>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    @foreach (var slot in dateGroup)
+                                    {
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio"
+                                                   name="SelectedSlotId" value="@slot.SlotId"
+                                                   id="slot-@slot.SlotId" required />
+                                            <label class="form-check-label btn btn-outline-primary btn-sm slot-label"
+                                                   for="slot-@slot.SlotId">
+                                                @slot.StartDateTime.ToString("HH:mm") - @slot.EndDateTime.ToString("HH:mm")
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted">利用可能な時間枠がありません。</p>
+                        }
+                        <span asp-validation-for="SelectedSlotId" class="text-danger"></span>
+                    </div>
+
+                    <hr />
+
+                    <h5 class="mb-3"><i class="bi bi-person"></i> お客様情報</h5>
+
+                    <div class="mb-3">
+                        <label asp-for="RespondentName" class="form-label"></label>
+                        <input asp-for="RespondentName" class="form-control" placeholder="山田 太郎" />
+                        <span asp-validation-for="RespondentName" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="RespondentEmail" class="form-label"></label>
+                        <input asp-for="RespondentEmail" class="form-control" placeholder="yamada@example.com" />
+                        <span asp-validation-for="RespondentEmail" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="RespondentCompany" class="form-label"></label>
+                        <input asp-for="RespondentCompany" class="form-control" placeholder="株式会社サンプル" />
+                        <span asp-validation-for="RespondentCompany" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-lg"></i> この日時で予約する
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="~/Views/Shared/_ValidationScriptsPartial.cshtml" />
+    <script>
+        // Highlight selected slot
+        document.querySelectorAll('input[name="SelectedSlotId"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                document.querySelectorAll('.slot-label').forEach(function(label) {
+                    label.classList.remove('btn-primary');
+                    label.classList.add('btn-outline-primary');
+                });
+                var label = document.querySelector('label[for="' + this.id + '"]');
+                if (label) {
+                    label.classList.remove('btn-outline-primary');
+                    label.classList.add('btn-primary');
+                }
+            });
+        });
+    </script>
+}

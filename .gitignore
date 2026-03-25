@@ -1,0 +1,56 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## NuGet
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nupkg
+**/[Pp]ackages/*.config
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio
+.vs/
+*.rsuser
+*.csproj.user
+*.dbmdl
+*.jfm
+*.pfx
+*.publishsettings
+
+## JetBrains Rider
+.idea/
+*.sln.iml
+
+## User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## OS files
+.DS_Store
+Thumbs.db
+
+## Secrets
+appsettings.*.local.json
+*.pfx
+*.key

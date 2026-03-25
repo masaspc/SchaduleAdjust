@@ -1,0 +1,112 @@
+@model CreatePollViewModel
+@{
+    ViewData["Title"] = "新規日程調整";
+}
+
+<h1 class="mb-4"><i class="bi bi-plus-circle"></i> 新規日程調整</h1>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" placeholder="例：プロジェクトキックオフミーティング" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="DurationMinutes" class="form-label"></label>
+                        <select asp-for="DurationMinutes" class="form-select">
+                            <option value="15">15分</option>
+                            <option value="30">30分</option>
+                            <option value="45">45分</option>
+                            <option value="60" selected>60分</option>
+                            <option value="90">90分</option>
+                            <option value="120">120分</option>
+                            <option value="180">180分</option>
+                        </select>
+                        <span asp-validation-for="DurationMinutes" class="text-danger"></span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="CandidateStartDate" class="form-label"></label>
+                            <input asp-for="CandidateStartDate" type="date" class="form-control" />
+                            <span asp-validation-for="CandidateStartDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CandidateEndDate" class="form-label"></label>
+                            <input asp-for="CandidateEndDate" type="date" class="form-control" />
+                            <span asp-validation-for="CandidateEndDate" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Deadline" class="form-label"></label>
+                        <input asp-for="Deadline" type="datetime-local" class="form-control" />
+                        <span asp-validation-for="Deadline" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Note" class="form-label"></label>
+                        <textarea asp-for="Note" class="form-control" rows="3" placeholder="相手に伝えたいメモ（任意）"></textarea>
+                        <span asp-validation-for="Note" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">同席者メールアドレス</label>
+                        <div id="attendee-list">
+                            <div class="input-group mb-2 attendee-row">
+                                <input type="email" name="AttendeeEmails" class="form-control" placeholder="example@company.com" />
+                                <button type="button" class="btn btn-outline-danger btn-remove-attendee">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" id="btn-add-attendee" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-plus"></i> 同席者を追加
+                        </button>
+                    </div>
+
+                    <hr />
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-outline-secondary">キャンセル</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> 作成する
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('btn-add-attendee').addEventListener('click', function() {
+            var list = document.getElementById('attendee-list');
+            var row = document.createElement('div');
+            row.className = 'input-group mb-2 attendee-row';
+            row.innerHTML = '<input type="email" name="AttendeeEmails" class="form-control" placeholder="example@company.com" />' +
+                '<button type="button" class="btn btn-outline-danger btn-remove-attendee"><i class="bi bi-x-lg"></i></button>';
+            list.appendChild(row);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-remove-attendee')) {
+                var rows = document.querySelectorAll('.attendee-row');
+                if (rows.length > 1) {
+                    e.target.closest('.attendee-row').remove();
+                } else {
+                    e.target.closest('.attendee-row').querySelector('input').value = '';
+                }
+            }
+        });
+    </script>
+}

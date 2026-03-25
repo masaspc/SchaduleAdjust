@@ -1,0 +1,114 @@
+@model EditSlotsViewModel
+@{
+    ViewData["Title"] = "候補日時の編集";
+}
+
+<h1 class="mb-2"><i class="bi bi-clock-history"></i> 候補日時の編集</h1>
+<p class="text-muted mb-4">@Model.Title（@Model.DurationMinutes 分）</p>
+
+<div class="row">
+    <div class="col-lg-8">
+        @* Auto-generate slots *@
+        @if (Model.Status == PollStatus.Draft)
+        {
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">自動算出</h5>
+                    <p class="card-text text-muted">同席者のOutlookカレンダーから空き時間を自動で算出します。</p>
+                    <form asp-action="FindSlots" asp-route-id="@Model.PollId" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="bi bi-magic"></i> 候補日時を自動算出
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+
+        @* Existing slots *@
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">候補日時一覧</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.ExistingSlots.Any())
+                {
+                    <div class="list-group">
+                        @foreach (var slot in Model.ExistingSlots)
+                        {
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-calendar-event text-primary"></i>
+                                    <strong>@slot.StartDateTime.ToString("yyyy/MM/dd (ddd)")</strong>
+                                    @slot.StartDateTime.ToString("HH:mm") - @slot.EndDateTime.ToString("HH:mm")
+                                    @if (slot.IsManuallyAdded)
+                                    {
+                                        <span class="badge bg-info ms-2">手動追加</span>
+                                    }
+                                </div>
+                                @if (Model.Status == PollStatus.Draft)
+                                {
+                                    <form asp-action="RemoveSlot" asp-route-slotId="@slot.SlotId" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="pollId" value="@Model.PollId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('この候補日時を削除しますか？')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-3">候補日時がありません。自動算出または手動追加してください。</p>
+                }
+            </div>
+        </div>
+
+        @* Manual add *@
+        @if (Model.Status == PollStatus.Draft)
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">手動で候補日時を追加</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AddSlot" asp-route-id="@Model.PollId" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">開始日時</label>
+                                <input type="datetime-local" name="newSlotStart" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">終了日時</label>
+                                <input type="datetime-local" name="newSlotEnd" class="form-control" required />
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="bi bi-plus-lg"></i> 追加
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+
+        @* Actions *@
+        <div class="d-flex justify-content-between">
+            <a asp-action="Index" class="btn btn-outline-secondary">ダッシュボードに戻る</a>
+            @if (Model.Status == PollStatus.Draft && Model.ExistingSlots.Any())
+            {
+                <form asp-action="Publish" asp-route-id="@Model.PollId" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-success"
+                            onclick="return confirm('この調整ページを公開しますか？')">
+                        <i class="bi bi-send"></i> 公開する
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,238 @@
+@model PollDetailViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1>@Model.Title</h1>
+        <span class="badge @(Model.Status switch {
+            PollStatus.Draft => "bg-secondary",
+            PollStatus.Open => "bg-primary",
+            PollStatus.Confirmed => "bg-success",
+            PollStatus.Expired => "bg-warning text-dark",
+            PollStatus.Cancelled => "bg-danger",
+            _ => "bg-secondary"
+        }) fs-6">
+            @(Model.Status switch {
+                PollStatus.Draft => "下書き",
+                PollStatus.Open => "公開中",
+                PollStatus.Confirmed => "確定済み",
+                PollStatus.Expired => "期限切れ",
+                PollStatus.Cancelled => "キャンセル",
+                _ => "不明"
+            })
+        </span>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> 戻る
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        @* Poll info *@
+        <div class="card mb-4">
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">所要時間</dt>
+                    <dd class="col-sm-8">@Model.DurationMinutes 分</dd>
+
+                    <dt class="col-sm-4">候補期間</dt>
+                    <dd class="col-sm-8">@Model.CandidateStartDate.ToString("yyyy/MM/dd") 〜 @Model.CandidateEndDate.ToString("yyyy/MM/dd")</dd>
+
+                    @if (Model.Deadline.HasValue)
+                    {
+                        <dt class="col-sm-4">回答期限</dt>
+                        <dd class="col-sm-8">@Model.Deadline.Value.ToString("yyyy/MM/dd HH:mm")</dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Note))
+                    {
+                        <dt class="col-sm-4">メモ</dt>
+                        <dd class="col-sm-8">@Model.Note</dd>
+                    }
+
+                    @if (Model.Status == PollStatus.Open || Model.Status == PollStatus.Confirmed)
+                    {
+                        <dt class="col-sm-4">調整URL</dt>
+                        <dd class="col-sm-8">
+                            <div class="input-group">
+                                <input type="text" class="form-control form-control-sm" value="@Model.BookingUrl" id="booking-url" readonly />
+                                <button class="btn btn-outline-secondary btn-sm" type="button" onclick="copyBookingUrl()">
+                                    <i class="bi bi-clipboard"></i> コピー
+                                </button>
+                            </div>
+                        </dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.TeamsJoinUrl))
+                    {
+                        <dt class="col-sm-4">Teams会議</dt>
+                        <dd class="col-sm-8">
+                            <a href="@Model.TeamsJoinUrl" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-camera-video"></i> 会議に参加
+                            </a>
+                        </dd>
+                    }
+                </dl>
+            </div>
+        </div>
+
+        @* Confirmed slot *@
+        @if (Model.Status == PollStatus.Confirmed && Model.ConfirmedSlot != null)
+        {
+            <div class="alert alert-success">
+                <h5><i class="bi bi-check-circle"></i> 確定日時</h5>
+                <p class="mb-0 fs-5">
+                    @Model.ConfirmedSlot.StartDateTime.ToString("yyyy/MM/dd (ddd) HH:mm") - @Model.ConfirmedSlot.EndDateTime.ToString("HH:mm")
+                </p>
+            </div>
+        }
+
+        @* Time slots *@
+        @if (Model.TimeSlots.Any())
+        {
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">候補日時</h5>
+                    @if (Model.Status == PollStatus.Draft)
+                    {
+                        <a asp-action="EditSlots" asp-route-id="@Model.PollId" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i> 編集
+                        </a>
+                    }
+                </div>
+                <div class="list-group list-group-flush">
+                    @foreach (var slot in Model.TimeSlots)
+                    {
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-calendar-event"></i>
+                                <strong>@slot.StartDateTime.ToString("yyyy/MM/dd (ddd)")</strong>
+                                @slot.StartDateTime.ToString("HH:mm") - @slot.EndDateTime.ToString("HH:mm")
+                                @if (slot.ResponseCount > 0)
+                                {
+                                    <span class="badge bg-info ms-2">@slot.ResponseCount 件回答</span>
+                                }
+                            </div>
+                            @if (Model.Status == PollStatus.Open)
+                            {
+                                <form asp-action="Confirm" asp-route-id="@Model.PollId" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="slotId" value="@slot.SlotId" />
+                                    <button type="submit" class="btn btn-sm btn-success"
+                                            onclick="return confirm('この日時で確定しますか？Outlook予定とTeams会議が自動作成されます。')">
+                                        <i class="bi bi-check-lg"></i> 確定
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Responses *@
+        @if (Model.Responses.Any())
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">回答一覧（@Model.Responses.Count 件）</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>回答者</th>
+                                <th>メール</th>
+                                <th>会社</th>
+                                <th>選択日時</th>
+                                <th>回答日時</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var response in Model.Responses.OrderByDescending(r => r.RespondedAt))
+                            {
+                                <tr>
+                                    <td>@response.RespondentName</td>
+                                    <td>@response.RespondentEmail</td>
+                                    <td>@(response.RespondentCompany ?? "-")</td>
+                                    <td>
+                                        @if (response.SelectedSlot != null)
+                                        {
+                                            @response.SelectedSlot.StartDateTime.ToString("MM/dd HH:mm")
+                                        }
+                                    </td>
+                                    <td>@response.RespondedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @* Action buttons *@
+        <div class="d-flex gap-2">
+            @if (Model.Status == PollStatus.Open)
+            {
+                <form asp-action="SendLink" asp-route-id="@Model.PollId" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-envelope"></i> 調整URLを送信
+                    </button>
+                </form>
+                <form asp-action="Cancel" asp-route-id="@Model.PollId" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger"
+                            onclick="return confirm('この調整をキャンセルしますか？')">
+                        <i class="bi bi-x-circle"></i> キャンセル
+                    </button>
+                </form>
+            }
+            @if (Model.Status == PollStatus.Draft)
+            {
+                <a asp-action="EditSlots" asp-route-id="@Model.PollId" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> 候補日時を編集
+                </a>
+            }
+        </div>
+    </div>
+
+    @* Sidebar: Attendees *@
+    <div class="col-lg-4">
+        @if (Model.Attendees.Any())
+        {
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">同席者</h6>
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var attendee in Model.Attendees)
+                    {
+                        <li class="list-group-item">
+                            <i class="bi bi-person"></i> @attendee.DisplayName
+                            <br /><small class="text-muted">@attendee.Email</small>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function copyBookingUrl() {
+            var input = document.getElementById('booking-url');
+            input.select();
+            navigator.clipboard.writeText(input.value);
+            var btn = input.nextElementSibling;
+            btn.innerHTML = '<i class="bi bi-check"></i> コピー済み';
+            setTimeout(function() {
+                btn.innerHTML = '<i class="bi bi-clipboard"></i> コピー';
+            }, 2000);
+        }
+    </script>
+}

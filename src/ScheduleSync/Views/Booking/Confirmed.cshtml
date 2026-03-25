@@ -1,0 +1,52 @@
+@model BookingConfirmViewModel
+@{
+    ViewData["Title"] = "予約完了";
+    Layout = "~/Views/Booking/_BookingLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm text-center">
+            <div class="card-body p-5">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h2 class="card-title mb-3">ご回答ありがとうございます</h2>
+                <p class="text-muted">以下の内容で回答を受け付けました。</p>
+
+                <div class="bg-light rounded p-4 mt-4 text-start">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">件名</dt>
+                        <dd class="col-sm-7">@Model.Title</dd>
+
+                        <dt class="col-sm-5">主催者</dt>
+                        <dd class="col-sm-7">@Model.OrganizerName</dd>
+
+                        <dt class="col-sm-5">選択日時</dt>
+                        <dd class="col-sm-7">
+                            @Model.SelectedSlotStart.ToString("yyyy/MM/dd (ddd)")
+                            <br />
+                            @Model.SelectedSlotStart.ToString("HH:mm") - @Model.SelectedSlotEnd.ToString("HH:mm")
+                        </dd>
+
+                        <dt class="col-sm-5">回答者</dt>
+                        <dd class="col-sm-7">@Model.RespondentName</dd>
+                    </dl>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.TeamsJoinUrl))
+                {
+                    <div class="mt-4">
+                        <a href="@Model.TeamsJoinUrl" target="_blank" class="btn btn-primary">
+                            <i class="bi bi-camera-video"></i> Teams会議に参加
+                        </a>
+                    </div>
+                }
+
+                <p class="text-muted mt-4 small">
+                    日程が確定しましたら、改めてご連絡いたします。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,71 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "ダッシュボード";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-speedometer2"></i> ダッシュボード</h1>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> 新規作成
+    </a>
+</div>
+
+@if (!Model.Polls.Any())
+{
+    <div class="text-center py-5">
+        <i class="bi bi-calendar-plus display-1 text-muted"></i>
+        <p class="mt-3 text-muted">まだ日程調整がありません。</p>
+        <a asp-action="Create" class="btn btn-primary">最初の日程調整を作成する</a>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>タイトル</th>
+                    <th>ステータス</th>
+                    <th>候補日数</th>
+                    <th>回答数</th>
+                    <th>回答期限</th>
+                    <th>作成日</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var poll in Model.Polls)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="Detail" asp-route-id="@poll.PollId" class="text-decoration-none fw-bold">
+                                @poll.Title
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge @poll.StatusBadgeClass">@poll.StatusDisplayName</span>
+                        </td>
+                        <td>@poll.SlotCount</td>
+                        <td>@poll.ResponseCount</td>
+                        <td>
+                            @if (poll.Deadline.HasValue)
+                            {
+                                @poll.Deadline.Value.ToString("yyyy/MM/dd HH:mm")
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td>@poll.CreatedAt.ToString("yyyy/MM/dd")</td>
+                        <td>
+                            <a asp-action="Detail" asp-route-id="@poll.PollId" class="btn btn-sm btn-outline-primary">
+                                詳細
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
