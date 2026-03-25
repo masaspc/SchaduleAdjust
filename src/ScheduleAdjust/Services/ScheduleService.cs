@@ -106,7 +106,7 @@ public class ScheduleService : IScheduleService
                 var localStart = TimeZoneInfo.ConvertTime(startDt, jst);
                 var localEnd = TimeZoneInfo.ConvertTime(endDt, jst);
 
-                if (localStart.Hour < 9 || localEnd.Hour > 17 || (localEnd.Hour == 17 && localEnd.Minute > 0))
+                if (localStart.Hour < 10 || localEnd.Hour > 17 || (localEnd.Hour == 17 && localEnd.Minute > 0))
                     continue;
                 if (localStart.DayOfWeek == DayOfWeek.Saturday || localStart.DayOfWeek == DayOfWeek.Sunday)
                     continue;
