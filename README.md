@@ -1,4 +1,4 @@
-# ScheduleSync
+# ScheduleAdjust
 
 社内外の日程調整を効率化するWebアプリケーションです。Microsoft Graph APIと連携し、Outlookカレンダーの空き時間を自動算出、社外の方にはURLを共有するだけで日程調整が完了します。確定時にはOutlook予定とTeams会議が自動作成されます。
 
@@ -29,15 +29,15 @@
 
 ```
 SchaduleAdjust/
-├── ScheduleSync.sln                  # ソリューションファイル
+├── ScheduleAdjust.sln                  # ソリューションファイル
 ├── sql/
 │   └── 001_CreateTables.sql          # DBマイグレーションSQL
-├── src/ScheduleSync/
+├── src/ScheduleAdjust/
 │   ├── Controllers/
 │   │   ├── ScheduleController.cs     # 社内向け（認証必須）
 │   │   └── BookingController.cs      # 社外向け（匿名アクセス可）
 │   ├── Data/
-│   │   └── ScheduleSyncDbContext.cs   # EF Core DbContext
+│   │   └── ScheduleAdjustDbContext.cs   # EF Core DbContext
 │   ├── Models/
 │   │   ├── SchedulePoll.cs           # 日程調整エンティティ
 │   │   ├── PollAttendee.cs           # 同席者
@@ -59,7 +59,7 @@ SchaduleAdjust/
 │   ├── Program.cs                    # エントリポイント・DI設定
 │   ├── appsettings.json              # 本番設定
 │   └── appsettings.Development.json  # 開発設定
-└── tests/ScheduleSync.Tests/         # ユニットテスト
+└── tests/ScheduleAdjust.Tests/         # ユニットテスト
 ```
 
 ## セットアップ
@@ -83,7 +83,7 @@ Azure PortalでEntra IDにアプリを登録し、以下のAPI権限を付与し
 
 ### 2. 設定ファイルの編集
 
-`src/ScheduleSync/appsettings.json` に Azure AD の情報を設定します:
+`src/ScheduleAdjust/appsettings.json` に Azure AD の情報を設定します:
 
 ```json
 {
@@ -103,7 +103,7 @@ Azure PortalでEntra IDにアプリを登録し、以下のAPI権限を付与し
 SQL Serverに接続し、マイグレーションスクリプトを実行します:
 
 ```bash
-sqlcmd -S . -d ScheduleSync -i sql/001_CreateTables.sql
+sqlcmd -S . -d ScheduleAdjust -i sql/001_CreateTables.sql
 ```
 
 ### 4. ビルドと実行
@@ -111,7 +111,7 @@ sqlcmd -S . -d ScheduleSync -i sql/001_CreateTables.sql
 ```bash
 dotnet restore
 dotnet build
-dotnet run --project src/ScheduleSync
+dotnet run --project src/ScheduleAdjust
 ```
 
 ブラウザで `https://localhost:5001` にアクセスしてください。

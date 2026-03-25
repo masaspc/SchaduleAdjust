@@ -1,4 +1,4 @@
--- ScheduleSync Database Schema
+-- ScheduleAdjust Database Schema
 -- SQL Server Migration Script
 
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'SchedulePolls')
