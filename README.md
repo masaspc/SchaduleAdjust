@@ -158,6 +158,91 @@ dotnet test
   │                                         │
 ```
 
+## デプロイ（Azure App Service）
+
+### 構成図
+
+```
+┌─────────────────────────────────────────────────┐
+│  Microsoft Azure                                │
+│                                                 │
+│  ┌──────────────────┐   ┌────────────────────┐  │
+│  │ Azure App Service │──▶│ Azure SQL Database │  │
+│  │ (Linux / .NET 8)  │   │ (S0〜S1)           │  │
+│  │                   │   └────────────────────┘  │
+│  │ ScheduleAdjust    │                           │
+│  │ + DeadlineHosted  │   ┌────────────────────┐  │
+│  │   Service         │──▶│ Microsoft Entra ID │  │
+│  └──────────────────┘   │ (認証 + Graph API)  │  │
+│          │               └────────────────────┘  │
+│          ▼                                       │
+│  社外: /Booking/{guid}    社内: /Schedule (SSO)   │
+└─────────────────────────────────────────────────┘
+```
+
+### 1. Azureリソースの作成
+
+Azure Portalで以下のリソースを作成します:
+
+1. **リソースグループ** を作成
+2. **Azure SQL Database** を作成（SKU: S0で開始）
+   - `sql/001_CreateTables.sql` を実行してテーブル作成
+3. **App Service Plan** を作成（B1 Linux）
+4. **App Service** を作成（.NET 8, Linux）
+
+### 2. App Serviceのアプリケーション設定
+
+Azure Portal > App Service > 構成 > アプリケーション設定に以下を登録:
+
+| 設定名 | 値 |
+|--------|-----|
+| `ConnectionStrings__DefaultConnection` | Azure SQL接続文字列 |
+| `AzureAd__TenantId` | Entra IDテナントID |
+| `AzureAd__ClientId` | アプリ登録のクライアントID |
+| `AzureAd__ClientSecret` | アプリ登録のクライアントシークレット |
+| `BaseUrl` | `https://<app-name>.azurewebsites.net` |
+| `UseStubGraphApi` | `false` |
+
+### 3. Entra IDリダイレクトURI
+
+Azure Portal > Entra ID > アプリの登録 > 認証で、リダイレクトURIを追加:
+
+```
+https://<app-name>.azurewebsites.net/signin-oidc
+```
+
+### 4. GitHub Actions CI/CD
+
+1. Azure Portal > App Service > デプロイ > 発行プロファイルをダウンロード
+2. GitHub > Settings > Secrets > `AZURE_WEBAPP_PUBLISH_PROFILE` に発行プロファイルの内容を登録
+3. `.github/workflows/deploy.yml` の `AZURE_WEBAPP_NAME` を実際のApp Service名に変更
+4. `main` ブランチへpushすると自動でビルド・テスト・デプロイが実行されます
+
+### 5. Dockerでのデプロイ（オプション）
+
+App ServiceのコンテナデプロイやDocker Composeを利用する場合:
+
+```bash
+docker build -t schedule-adjust .
+docker run -p 8080:8080 \
+  -e ConnectionStrings__DefaultConnection="<接続文字列>" \
+  -e AzureAd__TenantId="<テナントID>" \
+  -e AzureAd__ClientId="<クライアントID>" \
+  -e AzureAd__ClientSecret="<シークレット>" \
+  -e BaseUrl="https://your-domain.com" \
+  schedule-adjust
+```
+
+### ヘルスチェック
+
+App Service > 正常性チェックで以下のパスを設定:
+
+```
+/health
+```
+
+DB接続を含む正常性を確認できます。
+
 ## ライセンス
 
 Private

@@ -47,6 +47,10 @@ builder.Services.AddHostedService<DeadlineHostedService>();
 // Memory cache
 builder.Services.AddMemoryCache();
 
+// Health checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ScheduleAdjustDbContext>();
+
 // MVC
 builder.Services.AddControllersWithViews()
     .AddMicrosoftIdentityUI();
@@ -81,5 +85,8 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Schedule}/{action=Index}/{id?}");
+
+// Health check endpoint for Azure App Service
+app.MapHealthChecks("/health");
 
 app.Run();
