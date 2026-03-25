@@ -1,4 +1,6 @@
+using Azure.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Graph;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using ScheduleAdjust.Data;
@@ -12,16 +14,7 @@ builder.Host.UseSerilog((context, config) =>
     config.ReadFrom.Configuration(context.Configuration));
 
 // Authentication - Entra ID (Azure AD)
-builder.Services.AddMicrosoftIdentityWebAppAuthentication(builder.Configuration)
-    .EnableTokenAcquisitionToCallDownstreamApi(new[]
-    {
-        "Calendars.ReadWrite",
-        "OnlineMeetings.ReadWrite",
-        "User.Read.All",
-        "Mail.Send"
-    })
-    .AddMicrosoftGraph(builder.Configuration.GetSection("MicrosoftGraph"))
-    .AddInMemoryTokenCaches();
+builder.Services.AddMicrosoftIdentityWebAppAuthentication(builder.Configuration);
 
 // EF Core - SQL Server
 builder.Services.AddDbContext<ScheduleAdjustDbContext>(options =>
@@ -34,6 +27,15 @@ if (builder.Configuration.GetValue<bool>("UseStubGraphApi"))
 }
 else
 {
+    builder.Services.AddSingleton<GraphServiceClient>(sp =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var credential = new ClientSecretCredential(
+            config["AzureAd:TenantId"],
+            config["AzureAd:ClientId"],
+            config["AzureAd:ClientSecret"]);
+        return new GraphServiceClient(credential);
+    });
     builder.Services.AddScoped<IGraphApiService, GraphApiService>();
 }
 
