@@ -180,12 +180,44 @@ dotnet test
 └─────────────────────────────────────────────────┘
 ```
 
-### 1. Azureリソースの作成
+### 月額コスト目安
 
-Azure Portalで以下のリソースを作成します:
+| リソース | SKU | 月額（東日本） |
+|---------|-----|--------------|
+| App Service Plan | B1 (Linux) | 約 ¥1,900 |
+| Azure SQL Database | Basic (5 DTU) | 約 ¥750 |
+| Entra ID アプリ登録 | Free | ¥0 |
+| **合計** | | **約 ¥2,650/月** |
+
+### 1. Azureリソースの作成（スクリプト）
+
+Azure CLIで全リソースを一括作成できます:
+
+```bash
+# 前提: Azure CLIインストール済み
+az login
+
+# infra/setup-azure.sh の変数を確認・編集してから実行
+bash infra/setup-azure.sh
+```
+
+スクリプトが作成するリソース:
+- リソースグループ (`rg-schedule-adjust`)
+- Azure SQL Server + Database (Basic)
+- App Service Plan (B1 Linux) + App Service (.NET 8)
+- アプリケーション設定（DB接続文字列等）
+- SQLファイアウォールルール
+- テーブル作成（sqlcmdがある場合）
+
+不要になったら全リソースを削除:
+```bash
+bash infra/teardown-azure.sh
+```
+
+手動で作成する場合はAzure Portalで:
 
 1. **リソースグループ** を作成
-2. **Azure SQL Database** を作成（SKU: S0で開始）
+2. **Azure SQL Database** を作成（Basic 5 DTU）
    - `sql/001_CreateTables.sql` を実行してテーブル作成
 3. **App Service Plan** を作成（B1 Linux）
 4. **App Service** を作成（.NET 8, Linux）
