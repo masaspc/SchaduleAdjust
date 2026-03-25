@@ -8,7 +8,7 @@ on:
 
 env:
   DOTNET_VERSION: '8.0.x'
-  AZURE_WEBAPP_NAME: 'schedule-adjust'  # Azure App Service名に変更してください
+  AZURE_WEBAPP_NAME: 'schedule-adjust-26cf7d15'
 
 jobs:
   build-and-test:
