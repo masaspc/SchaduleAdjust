@@ -10,6 +10,14 @@
 
 $ErrorActionPreference = "Stop"
 
+function Assert-AzSuccess {
+    param([string]$StepName)
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ("Error: " + $StepName + " failed (exit code " + $LASTEXITCODE + ")") -ForegroundColor Red
+        exit 1
+    }
+}
+
 # ========================
 # Configuration
 # ========================
@@ -53,6 +61,13 @@ if (-not $account) {
 Write-Host ("Subscription: " + $account.name) -ForegroundColor Green
 Write-Host ""
 
+# Register resource providers
+Write-Host "Registering resource providers..." -ForegroundColor Yellow
+az provider register --namespace Microsoft.Sql --wait
+az provider register --namespace Microsoft.Web --wait
+Write-Host "  OK Resource providers registered" -ForegroundColor Green
+Write-Host ""
+
 # Auto-generate SQL password if empty
 if ([string]::IsNullOrEmpty($SQL_ADMIN_PASSWORD)) {
     $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -67,6 +82,7 @@ if ([string]::IsNullOrEmpty($SQL_ADMIN_PASSWORD)) {
 Write-Host ""
 Write-Host "[1/7] Creating resource group..." -ForegroundColor Yellow
 az group create --name $RESOURCE_GROUP --location $LOCATION --output none
+Assert-AzSuccess "Resource group creation"
 Write-Host ("  OK " + $RESOURCE_GROUP + " (" + $LOCATION + ")") -ForegroundColor Green
 
 # ========================
@@ -81,6 +97,7 @@ az sql server create `
     --admin-user $SQL_ADMIN_USER `
     --admin-password $SQL_ADMIN_PASSWORD `
     --output none
+Assert-AzSuccess "SQL Server creation"
 Write-Host ("  OK " + $SQL_SERVER_NAME) -ForegroundColor Green
 
 # ========================
@@ -96,6 +113,7 @@ az sql db create `
     --capacity 5 `
     --max-size 2GB `
     --output none
+Assert-AzSuccess "SQL Database creation"
 Write-Host ("  OK " + $SQL_DB_NAME) -ForegroundColor Green
 
 # ========================
@@ -110,6 +128,7 @@ az sql server firewall-rule create `
     --start-ip-address 0.0.0.0 `
     --end-ip-address 0.0.0.0 `
     --output none
+Assert-AzSuccess "Firewall rule (Azure services)"
 
 try {
     $LOCAL_IP = (Invoke-RestMethod -Uri "https://api.ipify.org" -TimeoutSec 5)
@@ -137,6 +156,7 @@ az appservice plan create `
     --sku $APP_SERVICE_SKU `
     --is-linux `
     --output none
+Assert-AzSuccess "App Service Plan creation"
 Write-Host ("  OK " + $APP_SERVICE_PLAN + " (" + $APP_SERVICE_SKU + ")") -ForegroundColor Green
 
 # ========================
@@ -150,6 +170,7 @@ az webapp create `
     --plan $APP_SERVICE_PLAN `
     --runtime DOTNETCORE:8.0 `
     --output none
+Assert-AzSuccess "App Service creation"
 Write-Host ("  OK " + $APP_NAME) -ForegroundColor Green
 
 # ========================
@@ -167,6 +188,7 @@ az webapp config connection-string set `
     --connection-string-type SQLAzure `
     --settings $connSetting `
     --output none
+Assert-AzSuccess "Connection string setting"
 
 $baseUrl = "https://" + $APP_NAME + ".azurewebsites.net"
 $settings = @(
@@ -185,15 +207,19 @@ az webapp config appsettings set `
     --resource-group $RESOURCE_GROUP `
     --settings @settings `
     --output none
+Assert-AzSuccess "App settings"
 
-$healthJson = '{"healthCheckPath": "/health"}'
+$healthJson = '{\"healthCheckPath\": \"/health\"}'
 az webapp config set `
     --name $APP_NAME `
     --resource-group $RESOURCE_GROUP `
     --generic-configurations $healthJson `
     --output none
-
-Write-Host "  OK App settings configured" -ForegroundColor Green
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  Warning: Health check config failed (non-critical)" -ForegroundColor DarkYellow
+} else {
+    Write-Host "  OK App settings configured" -ForegroundColor Green
+}
 
 # ========================
 # Table creation
