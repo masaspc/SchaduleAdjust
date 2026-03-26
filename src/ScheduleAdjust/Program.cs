@@ -14,7 +14,10 @@ builder.Host.UseSerilog((context, config) =>
     config.ReadFrom.Configuration(context.Configuration));
 
 // Authentication - Entra ID (Azure AD)
-builder.Services.AddMicrosoftIdentityWebAppAuthentication(builder.Configuration);
+builder.Services.AddMicrosoftIdentityWebAppAuthentication(builder.Configuration)
+    .EnableTokenAcquisitionToCallDownstreamApi(
+        new[] { "Calendars.ReadWrite", "OnlineMeetings.ReadWrite", "User.Read.All", "Mail.Send" })
+    .AddInMemoryTokenCaches();
 
 // EF Core - SQL Server
 builder.Services.AddDbContext<ScheduleAdjustDbContext>(options =>
