@@ -112,14 +112,14 @@ public class ScheduleService : IScheduleService
                     continue;
 
                 // Avoid duplicates
-                if (poll.TimeSlots.Any(s => s.StartDateTime == startDt && s.EndDateTime == endDt))
+                if (poll.TimeSlots.Any(s => s.StartDateTime == localStart && s.EndDateTime == localEnd))
                     continue;
 
                 var slot = new PollTimeSlot
                 {
                     PollId = pollId,
-                    StartDateTime = startDt,
-                    EndDateTime = endDt,
+                    StartDateTime = localStart,
+                    EndDateTime = localEnd,
                     IsManuallyAdded = false,
                     IsAvailable = true
                 };
